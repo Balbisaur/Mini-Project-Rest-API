@@ -208,8 +208,8 @@ def get_product(id):
 @app.route('/products/<int:id>', methods=['PUT'])
 def update_product(id):
     
-    query = select(Products).where(Products.id == id)
-    result = db.session.execute(query).scalars().first()
+    query = select(Products).where(Products.id == id)# Selecting the product to update using the id of the product
+    result = db.session.execute(query).scalars().first() # first() grabs the first object to return from the query
     if result is None:
         return jsonify({"Error": "Product not found"}), 404
     
@@ -228,7 +228,7 @@ def update_product(id):
 
 @app.route('/products', methods=['PUT'])
 
-def update_products():
+def update_products():# Updating all products using a PUT request
     query = select(Products)
     result = db.session.execute(query).scalars()
     products = result.all()
@@ -284,16 +284,16 @@ class OrderSchema(ma.Schema):
 order_schema = OrderSchema()
 orders_schema = OrderSchema(many=True)
 
-@app.route('/orders', methods=['POST'])
+@app.route('/orders', methods=['POST'])# Adding new order to the order list
 def add_order():
     try:
         order_data = order_schema.load(request.json)
     except ValidationError as e:
         return jsonify(e.messages), 400
     
-    new_order = Orders(order_date=date.today(), customer_id = order_data['customer_id'])
+    new_order = Orders(order_date=date.today(), customer_id = order_data['customer_id'])# Creating new order object with order_date and customer_id from order_data dictionary
 
-    for item_id in order_data['items']:
+    for item_id in order_data['items']:# For each item_id in order_data['items'] list, get the product object from database and append it to new_order.products list
         query = select(Products).filter(Products.id == item_id)
         item = db.session.execute(query).scalar()
         new_order.products.append(item)
@@ -304,26 +304,26 @@ def add_order():
     return jsonify({"Message": "New Order Placed!"}), 201
 
 
-@app.route("/order_items/<int:id>", methods=['GET'])
+@app.route("/order_items/<int:id>", methods=['GET'])# Getting order items by id from order list and return order details
 def order_items(id):
     query = select(Orders).filter(Orders.id == id)
     order = db.session.execute(query).scalar()
     return products_schema.jsonify(order.products)
 
 
-@app.route("/orders", methods=['GET'])
+@app.route("/orders", methods=['GET'])# Getting all orders
 def get_orders():
     query = select(Orders)
     orders = db.session.execute(query).scalars()
     return orders_schema.jsonify(orders)
 
-@app.route('/orders/track/<int:id>', methods=['GET'])
+@app.route('/orders/track/<int:id>', methods=['GET']) # Tracking orders by id from order list and return order details
 def track_order(id):
     query = select(Orders).filter(Orders.id == id)
     result = db.session.execute(query).scalar()
     if result is None:
         return jsonify({"Error": "Order not found"}), 404
-    order_data = {
+    order_data = { # Creating a dictionary of order data to be returned to the user
         "id": result.id,
         "order_date": result.order_date,
         "customer_id": result.customer_id,}
